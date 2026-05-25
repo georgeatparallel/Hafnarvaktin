@@ -1,0 +1,178 @@
+{
+  "name": "hafnarvaktin-agent-router",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 200],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "notes": "POST {message, user} -> forwards to NanoClaw agent endpoint."
+    },
+    {
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 420],
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "Qj1ohGdTv20rmdiC",
+          "name": "iamstormbot"
+        }
+      },
+      "notes": "Wired to existing iamstormbot credential."
+    },
+    {
+      "id": "slack-trigger",
+      "name": "Slack Trigger",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [240, 640],
+      "parameters": {
+        "trigger": ["message"],
+        "watchWorkspace": false,
+        "options": {}
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "NBdrz7xKuueqDLnQ",
+          "name": "VOLTEX slack bot"
+        }
+      },
+      "notes": "Wired to VOLTEX slack bot credential. Slack app must subscribe to the relevant events for this to fire."
+    },
+    {
+      "id": "normalise-payload",
+      "name": "Normalise Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 420],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Normalise inputs from Webhook / Telegram / Slack into {message, user, channel}.\nconst item = $json;\n\n// Webhook body\nif (item && item.body && typeof item.body === 'object') {\n  return {\n    json: {\n      message: item.body.message || '',\n      user: item.body.user || 'webhook',\n      channel: 'webhook',\n    },\n  };\n}\n\n// Telegram update\nif (item && item.message && item.message.from) {\n  const m = item.message;\n  return {\n    json: {\n      message: m.text || m.caption || '',\n      user: m.from.username || String(m.from.id || 'telegram'),\n      channel: 'telegram',\n      chat_id: m.chat && m.chat.id,\n    },\n  };\n}\n\n// Slack event wrapper\nif (item && item.event) {\n  const e = item.event;\n  return {\n    json: {\n      message: e.text || '',\n      user: e.user || 'slack',\n      channel: 'slack',\n      slack_channel: e.channel,\n    },\n  };\n}\n\n// Fallback\nreturn { json: { message: '', user: 'unknown', channel: 'unknown', raw: item } };\n"
+      }
+    },
+    {
+      "id": "call-nanoclaw",
+      "name": "Call NanoClaw",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [720, 420],
+      "parameters": {
+        "method": "POST",
+        "url": "http://placeholder-nanoclaw:8001/chat",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { message: $json.message, user: $json.user, channel: $json.channel } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "notes": "The live NanoClaw endpoint is internal; this exported workflow uses a placeholder hostname in its place."
+    },
+    {
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [960, 200],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: $json.reply } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "send-telegram-reply",
+      "name": "Send Telegram Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 420],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Normalise Payload').item.json.chat_id }}",
+        "text": "={{ $json.reply }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "Qj1ohGdTv20rmdiC",
+          "name": "iamstormbot"
+        }
+      },
+      "notes": "Sends NanoClaw reply back to the originating Telegram chat. Only triggers when the source channel was Telegram."
+    },
+    {
+      "id": "if-telegram",
+      "name": "If Telegram",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [840, 420],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "is-telegram",
+              "leftValue": "={{ $('Normalise Payload').item.json.channel }}",
+              "rightValue": "telegram",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Normalise Payload", "type": "main", "index": 0 }]]
+    },
+    "Telegram Trigger": {
+      "main": [[{ "node": "Normalise Payload", "type": "main", "index": 0 }]]
+    },
+    "Slack Trigger": {
+      "main": [[{ "node": "Normalise Payload", "type": "main", "index": 0 }]]
+    },
+    "Normalise Payload": {
+      "main": [[{ "node": "Call NanoClaw", "type": "main", "index": 0 }]]
+    },
+    "Call NanoClaw": {
+      "main": [[
+        { "node": "Respond to Webhook", "type": "main", "index": 0 },
+        { "node": "If Telegram", "type": "main", "index": 0 }
+      ]]
+    },
+    "If Telegram": {
+      "main": [
+        [{ "node": "Send Telegram Reply", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

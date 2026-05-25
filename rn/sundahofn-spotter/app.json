@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Sundahöfn Spotter",
+    "slug": "sundahofn-spotter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "sundahofnspotter",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "is.syntaxerror.sundahofnspotter"
+    },
+    "android": {
+      "package": "is.syntaxerror.sundahofnspotter"
+    }
+  }
+}

@@ -1,0 +1,215 @@
+/* Hafnarvaktin — live-feed view.
+   Editorial dark minimalism: dusk gradient + faint grain, a Fraunces wordmark,
+   mono micro-labels, one warm harbour-lamp accent, green LIVE status, and a
+   single 16:9 frame that crossfades between the two cameras. The camera control
+   is the uiverse flip-switch (poc/docs/uiverse.*), re-themed to amber. */
+
+:root {
+  --bg: #0a0c0e;
+  --ink: #eef1f3;
+  --muted: #8b97a0;
+  --line: rgba(255, 255, 255, 0.10);
+  --accent: #e9b872;          /* harbour-lamp amber */
+  --live: #34c759;            /* live = green */
+  --radius: 16px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  min-height: 100svh;
+  background:
+    radial-gradient(120% 80% at 50% -12%, #18222e 0%, rgba(24, 34, 46, 0) 58%),
+    radial-gradient(90% 60% at 50% 118%, #1a140c 0%, rgba(26, 20, 12, 0) 52%),
+    var(--bg);
+  color: var(--ink);
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.6rem, 4.5vh, 3.2rem);
+  padding: clamp(1.5rem, 6vh, 4rem) 1.25rem;
+  text-align: center;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.grain {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+.head {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  animation: rise 0.9s var(--ease) both;
+}
+.title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  letter-spacing: -0.015em;
+  line-height: 0.95;
+}
+.subtitle {
+  font-size: clamp(0.6rem, 1.4vw, 0.76rem);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.subtitle .sep { color: var(--accent); margin: 0 0.2em; }
+
+.stage {
+  position: relative; z-index: 1;
+  width: min(92vw, 1080px);
+  display: flex; flex-direction: column; align-items: center; gap: 1.1rem;
+  animation: rise 1s 0.12s var(--ease) both;
+}
+
+/* LIVE — now a centred pill ABOVE the frame, green status. */
+.live {
+  display: inline-flex; align-items: center; gap: 0.55em;
+  font-size: 0.58rem; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(8, 10, 12, 0.5); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: 999px; padding: 0.5em 0.95em;
+}
+.live__pulse {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--live);
+  box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.6); animation: pulse 2.2s infinite;
+}
+
+.frame {
+  position: relative; width: 100%; aspect-ratio: 16 / 9;
+  border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--line); background: #05070a;
+  box-shadow: 0 44px 130px -44px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.frame__img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity 1s ease;
+}
+.frame__img.is-active { opacity: 1; }
+/* (camera name comes from the inference service's burned-in info bar) */
+
+/* Camera switch — uiverse flip-lever, scaled up; the lever sticks upward so the
+   wrapper reserves headroom below the frame. */
+.switch {
+  display: flex; justify-content: center; align-items: flex-end;
+  min-height: 5em; margin-top: 0;
+}
+.toggle-container { cursor: pointer; }   /* whole switch is the click target */
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(52, 199, 89, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ── uiverse flip-switch (from poc/docs/uiverse.css) ──────────────────
+   Re-themed: active fill amber (was green); enlarged via font-size. */
+.toggle-container {
+  --knob-size: 1.75em;
+  font-size: 1.35rem;          /* bigger than the default em sizing */
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.toggle-input {
+  position: absolute;
+  z-index: 2;
+  bottom: 132.5%;
+  border-radius: 50%;
+  transform: rotate(-25deg);
+  transform-origin: 50% 4.75em;
+  width: var(--knob-size);
+  height: var(--knob-size);
+  opacity: 0;
+  font: inherit;
+  transition: transform .24s cubic-bezier(.65, 1.35, .5, 1);
+  cursor: pointer;
+}
+.toggle-input:checked { transform: rotate(25deg); }
+
+.toggle-handle-wrapper {
+  position: absolute;
+  z-index: 1;
+  bottom: -135%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 62.125%, transparent 50%);
+  mask-image: linear-gradient(to bottom, #000 62.125%, transparent 50%);
+  width: 200%;
+  overflow: hidden;
+}
+.toggle-handle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: rotate(-25deg);
+  transform-origin: bottom center;
+  transition: transform .24s cubic-bezier(.65, 1.35, .5, 1);
+}
+.toggle-input:checked + .toggle-handle-wrapper > .toggle-handle { transform: rotate(25deg); }
+
+.toggle-handle-knob {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  width: var(--knob-size);
+  height: var(--knob-size);
+  background-image: radial-gradient(farthest-corner at 70% 30%, #fedee2 4%, #d63534 12% 24%, #a81a1a 50% 65%, #d63534 75%);
+  transition: transform .24s cubic-bezier(.65, 1.35, .5, 1);
+}
+.toggle-input:checked + .toggle-handle-wrapper .toggle-handle-knob { transform: rotate(-90deg); }
+
+.toggle-handle-knob::after {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  border-radius: inherit; width: 100%; height: 100%;
+  box-shadow: inset 0 0 8px 2px rgb(255 255 255 / .4);
+  opacity: 0; transition: opacity .2s;
+}
+@media (hover: hover) {
+  .toggle-input:hover + .toggle-handle-wrapper .toggle-handle-knob::after,
+  .toggle-input:focus-visible + .toggle-handle-wrapper .toggle-handle-knob::after { opacity: 1; }
+}
+
+.toggle-handle-bar-wrapper { position: relative; width: .5em; height: 3em; }
+.toggle-handle-bar {
+  position: absolute;
+  top: calc(var(--knob-size) / 2 * -1);
+  left: 0; width: 100%;
+  height: calc(100% + var(--knob-size) / 2);
+  background-image: linear-gradient(to right, #777475, #a4a4a4, #fff 45% 55%, #a4a4a4, #777475);
+  background-position-x: .06125em;
+  transition: background-position-x .24s cubic-bezier(.65, 1.35, .5, 1);
+  box-shadow: inset 0 1em .25em rgb(0 0 0 / .4);
+}
+.toggle-input:checked + .toggle-handle-wrapper .toggle-handle-bar { background-position-x: -.06125em; }
+
+.toggle-base {
+  position: relative;
+  border-radius: 3.125em;
+  padding: .25em;
+  width: 3.5em; height: 1.125em;
+  background-image: linear-gradient(to bottom, rgba(40, 48, 56, 0.45), rgba(16, 20, 24, 0.40));
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .3);
+}
+.toggle-base-inside {
+  position: relative;
+  border-radius: inherit; width: 100%; height: 100%;
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  box-shadow: inset 0 1px rgb(255 255 255 / .06), inset 0 -1px .25em rgb(0 0 0 / .28);
+}
+/* No colour fill on toggle — minimalistic; the lever movement is the feedback. */

@@ -1,0 +1,58 @@
+{
+  "version": "1",
+  "agent_group_id": "ag-1777921519963-8l0zcs",
+  "scenarios": [
+    {
+      "id": "hull",
+      "label": "Exact lookup by hull / skipaskrá number",
+      "expected_first_tool": "lookup_vessel_by_hull",
+      "questions": [
+        "What is vessel 2609?",
+        "Look up skipaskrárnúmer 1411 for me.",
+        "Find the vessel with hull number 0843.",
+        "Which boat has registration number 2701?",
+        "Lookup vessel 1990.",
+        "Hull number 2609 — give me the base data."
+      ]
+    },
+    {
+      "id": "live_harbour",
+      "label": "Live harbour situation",
+      "expected_first_tool": "vessels_near_harbour",
+      "questions": [
+        "Which vessels are at Sundahöfn right now?",
+        "What's at the harbour right now?",
+        "Any boats at the harbour right now?",
+        "Who is alongside in Ísafjörður?",
+        "Give me the live AIS picture for Sundahöfn please.",
+        "Show me live activity at the harbour."
+      ]
+    },
+    {
+      "id": "activity_range",
+      "label": "Activity over a date range",
+      "expected_first_tool": "harbour_activity",
+      "questions": [
+        "Summarise harbour activity from 2026-05-10 to 2026-05-15.",
+        "What has happened in the harbour over the last week? Use 2026-05-11 to 2026-05-18.",
+        "Make a summary for the period 2026-05-01 to 2026-05-07 in Sundahöfn.",
+        "Activity report between 2026-05-12 and 2026-05-16.",
+        "Activity overview for 2026-05-15 to 2026-05-17 please.",
+        "Give me a one-day overview of the harbour on 14 May 2026 (use 2026-05-14 to 2026-05-15)."
+      ]
+    },
+    {
+      "id": "semantic_then_graph",
+      "label": "Semantic search leading to graph expansion",
+      "expected_first_tool": "search_vessels",
+      "questions": [
+        "Are there any old wooden fishing boats from the Westfjords?",
+        "Find vessels that look like old wooden small-boats from the Westfjords.",
+        "Show me steel fishing vessels over 40 metres.",
+        "Which gillnet boats do we have in the registry?",
+        "Search for wooden vessels built before 1980.",
+        "Find vessels rigged for purse-seining — semantic search."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+# Secrets / env
+.env
+.env.*
+!.env.example
+!.env.example.*
+*.env.bak
+.env.bak-*
+.env.premigration-*
+
+# Local Claude Code settings (not vendored skill dirs)
+.claude/settings.local.json
+
+# Node / TypeScript build
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+.expo/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Java / Maven
+target/
+*.class
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Runtime / logs
+*.log
+logs/
+
+# NanoClaw runtime state (DB, sessions, env, sockets)
+ai/nanoclaw/data/
+ai/nanoclaw/logs/
+ai/nanoclaw/dist/
+
+# ML training data + model weights (too large for git; distribute separately)
+ml/data/
+ml/data-cache/
+ml/models/*.pt
+ml/models/*.pt.*
+# except the deployed v5 checkpoint, kept in the hand-in repo so it can be run
+!ml/models/best.pt
+ml/notebooks/.ipynb_checkpoints/
+
+# Backups / scratch
+*.bak
+*.tmp
+*~

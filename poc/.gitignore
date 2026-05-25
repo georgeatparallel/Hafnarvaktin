@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Build output
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Python
+service/__pycache__/
+service/*.pyc
+
+# OS
+.DS_Store
+
+# Legacy folders kept for reference during migration
+_legacy-*/

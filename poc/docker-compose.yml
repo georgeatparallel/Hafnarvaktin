@@ -1,0 +1,207 @@
+# docker-compose.yml
+# Top-level orchestration for the Hafnarvaktin (Ísafjörður harbour watch) project.
+# Services: hafnarvaktin-db (Postgres+pgvector), hafnarvaktin-inference (YOLO),
+# hafnarvaktin-backend (Spring Boot), hafnarvaktin-graph (Neo4j),
+# hafnarvaktin-mcp (AI agent MCP server).
+#
+# Run:   docker -c user compose up -d --build
+# Logs:  docker -c user compose logs -f [service]
+#
+# Secrets are loaded from ./.env (chmod 600). ./.env.example is the template.
+#
+# Forked from ~/projects/fljotavik on 2026-05-01 — fresh DB volume, new ports
+# (8191/8184) so the legacy fljotavik stack on 8091/8084 stays intact as a
+# fallback during the exam window.
+
+name: hafnarvaktin
+
+services:
+
+  hafnarvaktin-db:
+    # Postgres 17 + pgvector. Same data dir layout as postgres:17, so the
+    # existing `hafnarvaktin-db-data` volume mounts cleanly. After first
+    # start with this image, run `CREATE EXTENSION vector;` once via
+    # db/migrations/002_marine_schema.sql.
+    image: pgvector/pgvector:pg17
+    container_name: hafnarvaktin-db
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Consumed by seed-camera.sh on first DB init only.
+      RTSP_USER:         ${RTSP_USER}
+      RTSP_PASSWORD:     ${RTSP_PASSWORD}
+      RTSP_HOST:         ${RTSP_HOST}
+      RTSP_PORT:         ${RTSP_PORT}
+      RTSP_PATH:         ${RTSP_PATH}
+    volumes:
+      - hafnarvaktin-db-data:/var/lib/postgresql/data
+      # Init scripts run only when the data volume is empty (first init).
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./db/seed-camera.sh:/docker-entrypoint-initdb.d/02-seed-camera.sh:ro
+    networks:
+      - hafnarvaktin-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  hafnarvaktin-inference:
+    build:
+      context: ./service
+    container_name: hafnarvaktin-inference
+    environment:
+      PYTHONUNBUFFERED:     "1"
+      YOLO_OFFLINE:         "True"
+      RTSP_USER:            ${RTSP_USER}
+      RTSP_PASSWORD:        ${RTSP_PASSWORD}
+      RTSP_HOST:            ${RTSP_HOST}
+      RTSP_PORT:            ${RTSP_PORT}
+      RTSP_PATH:            ${RTSP_PATH}
+      STREAM_URL:           ${STREAM_URL:-}
+      CAMERAS_JSON:         ${CAMERAS_JSON:-}
+      PREVIEW_FPS:          ${PREVIEW_FPS}
+      CONFIDENCE_THRESHOLD: ${CONFIDENCE_THRESHOLD}
+      IOU_THRESHOLD:        ${IOU_THRESHOLD:-0.45}
+      INFER_IMGSZ:          ${INFER_IMGSZ:-1280}
+      CAMERA_ID:            ${CAMERA_ID}
+      PORT:                 "8084"
+      # Active-learning frame mining. Wide band 0.15-0.65 for Hafnarvaktin
+      # (only 2 cams = lower throughput, can afford a wider uncertainty net).
+      MINING_ENABLED:          ${MINING_ENABLED:-false}
+      MINING_DIR:              /app/mining
+      MINING_CONF_LOW:         ${MINING_CONF_LOW:-0.15}
+      MINING_CONF_HIGH:        ${MINING_CONF_HIGH:-0.65}
+      MINING_MIN_INTERVAL_SEC: ${MINING_MIN_INTERVAL_SEC:-30}
+      # Per-camera ROI polygons. Detections whose bbox center falls outside
+      # the polygon are silently dropped. Mining still captures them.
+      # Keyed by camera directional code (N = Sundahöfn N, S = Sundahöfn S).
+      ROI_MASK_CAM_N:          ${ROI_MASK_CAM_N:-}
+      ROI_MASK_CAM_S:          ${ROI_MASK_CAM_S:-}
+      # ROI_MASK_MODE: "keep" → polygons mark the WATER area (default)
+      #                "exclude" → polygons mark rocks/houses to drop
+      ROI_MASK_MODE:           ${ROI_MASK_MODE:-keep}
+    volumes:
+      - ../ml/models:/app/models:ro
+      # Mining output lands on the host (./hafnarvaktin-data/mining/cam<CODE>/,
+      # where CODE is the camera's directional code, e.g. camN, camS).
+      - ../ml/data/mining:/app/mining
+    ports:
+      # Host-exposed for direct debugging. Different from fljotavik (8084) so
+      # the legacy stack stays reachable on its own port during the harvest.
+      - "8184:8084"
+    networks:
+      - hafnarvaktin-net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(\"http://localhost:8084/healthz\", timeout=2).status==200 else 1)' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+    restart: unless-stopped
+
+  hafnarvaktin-backend:
+    build:
+      context: ./backend
+    container_name: hafnarvaktin-backend
+    environment:
+      SERVER_PORT:        "8080"
+      DB_HOST:            ${DB_HOST}
+      DB_PORT:            ${DB_PORT}
+      DB_NAME:            ${POSTGRES_DB}
+      DB_USER:            ${POSTGRES_USER}
+      DB_PASSWORD:        ${POSTGRES_PASSWORD}
+      INFERENCE_BASE_URL: ${INFERENCE_BASE_URL}
+      CAMERAS_JSON:       ${CAMERAS_JSON:-}
+      ANTHROPIC_API_KEY:  ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL:    ${ANTHROPIC_MODEL:-claude-haiku-4-5-20251001}
+      DATALASTIC_API_KEY: ${DATALASTIC_API_KEY:-}
+      HARBOUR_LAT:        ${HARBOUR_LAT:-66.07}
+      HARBOUR_LON:        ${HARBOUR_LON:--23.13}
+    ports:
+      - "${BACKEND_HOST_PORT:-8191}:8080"
+    networks:
+      - hafnarvaktin-net
+    depends_on:
+      hafnarvaktin-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health | grep -q '\"UP\"' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+    restart: unless-stopped
+
+  # ── Marine ingestion (added 2026-05-01) ─────────────────────────
+
+  hafnarvaktin-graph:
+    # Neo4j Community 5 — graph DB for vessel/port/detection relations.
+    # See db/graph-init/01-init.cypher for schema (run once).
+    image: neo4j:5-community
+    container_name: hafnarvaktin-graph
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 1g
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    volumes:
+      - hafnarvaktin-graph-data:/data
+      - hafnarvaktin-graph-logs:/logs
+      - ./db/graph-init:/import:ro
+    networks:
+      - hafnarvaktin-net
+    healthcheck:
+      # cypher-shell takes 6-12s cold on this Pi; HTTP probe is cheaper
+      # and doesn't need auth (Neo4j HTTP /db endpoint requires it but / does not).
+      test: ["CMD-SHELL", "wget -qO- --timeout=5 http://localhost:7474/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 120s
+    restart: unless-stopped
+
+  # ── AI agent layer (MCP server) ───────────────────
+  # MCP server exposing the harbour tools to the agent. n8n (used by the
+  # harbour_activity tool) runs on a separate host, so N8N_HARBOUR_ACTIVITY_URL
+  # points at its public URL rather than a compose-internal hostname.
+  hafnarvaktin-mcp:
+    build:
+      context: ../ai/mcp-server
+    container_name: hafnarvaktin-mcp
+    environment:
+      MCP_TRANSPORT:            sse
+      MCP_PORT:                 "7000"
+      NEO4J_AUTH:               ${NEO4J_AUTH}
+      ML_BACKEND_URL:           http://hafnarvaktin-backend:8080
+      DATALASTIC_API_KEY:       ${DATALASTIC_API_KEY:-}
+      N8N_HARBOUR_ACTIVITY_URL: ${N8N_HARBOUR_ACTIVITY_URL:-https://n8n.syntaxerror.is/webhook/harbour-activity}
+    ports:
+      - "7000:7000"
+    networks:
+      - hafnarvaktin-net
+    depends_on:
+      hafnarvaktin-graph:
+        condition: service_healthy
+      hafnarvaktin-backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  hafnarvaktin-net:
+    driver: bridge
+    # Marked external-friendly so n8n (running in n8n-compose_default
+    # network) can be `docker network connect`-ed in for cron workflows.
+    name: hafnarvaktin_hafnarvaktin-net
+
+volumes:
+  # Fresh internal volume — no external reuse. DB seeds clean from
+  # db/schema.sql + db/seed-camera.sh + CAMERAS_JSON on first up.
+  hafnarvaktin-db-data:
+  hafnarvaktin-graph-data:
+  hafnarvaktin-graph-logs:

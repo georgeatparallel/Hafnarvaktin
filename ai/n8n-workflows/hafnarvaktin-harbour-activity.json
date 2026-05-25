@@ -1,0 +1,76 @@
+{
+  "name": "hafnarvaktin-harbour-activity",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "harbour-activity",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "postgres-query",
+      "name": "Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [480, 300],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  (SELECT count(*) FROM detections\n    WHERE timestamp >= $1::date AND timestamp < ($2::date + interval '1 day')) AS detections,\n  (SELECT count(DISTINCT vessel_id) FROM port_calls\n    WHERE arrival_ts >= $1::date AND arrival_ts < ($2::date + interval '1 day')) AS unique_vessels,\n  (SELECT round(avg(wave_h_m)::numeric, 2) FROM weather_obs\n    WHERE ts >= $1::date AND ts < ($2::date + interval '1 day')) AS avg_wave_h_m",
+        "options": {
+          "queryReplacement": "={{ $json.body.start_date }},={{ $json.body.end_date }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "XUZBio32zCuWHELp",
+          "name": "hafnarvaktin-db"
+        }
+      }
+    },
+    {
+      "id": "format-summary",
+      "name": "Format Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Compose markdown summary from the Postgres aggregate row + webhook dates.\nconst row = $input.first().json;\nconst webhookData = $('Webhook').first().json.body || {};\nconst startDate = webhookData.start_date || 'unknown';\nconst endDate = webhookData.end_date || 'unknown';\n\nconst detections = row.detections != null ? Number(row.detections) : 0;\nconst uniqueVessels = row.unique_vessels != null ? Number(row.unique_vessels) : 0;\nconst avgWaveRaw = row.avg_wave_h_m;\nconst avgWave = avgWaveRaw != null ? Number(avgWaveRaw).toFixed(2) : 'n/a';\n\nconst summary = [\n  `## Sundahöfn activity ${startDate} → ${endDate}`,\n  '',\n  `- Camera detections: ${detections.toLocaleString('en-US')}`,\n  `- Unique vessels at port (GFW): ${uniqueVessels}`,\n  `- Avg wave height: ${avgWave} m`,\n].join('\\n');\n\nreturn [{ json: { summary } }];\n"
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [960, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { summary: $json.summary } }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Postgres", "type": "main", "index": 0 }]]
+    },
+    "Postgres": {
+      "main": [[{ "node": "Format Summary", "type": "main", "index": 0 }]]
+    },
+    "Format Summary": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
