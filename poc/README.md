@@ -16,7 +16,7 @@ under one `docker compose` on Helmut.
 
 | container | image / build | host port | role |
 |---|---|---|---|
-| `hafnarvaktin-db` | pgvector/pgvector:pg17 | — | Postgres 17 + pgvector: cameras, detections, vessels, weather |
+| `hafnarvaktin-db` | pgvector/pgvector:pg17 | — (`5432` internal) | Postgres 17 + pgvector: cameras, detections, vessels, weather |
 | `hafnarvaktin-inference` | `./service` (Python) | `8184` → 8084 | YOLO11m boat detector over the two streams |
 | `hafnarvaktin-backend` | `./backend` (Spring Boot) | `8191` → 8080 | REST API + web dashboard (see `backend/README.md`) |
 | `hafnarvaktin-graph` | neo4j:5-community | `7474`/`7687` | vessel/port graph + vector index for RAG |

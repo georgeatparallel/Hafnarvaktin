@@ -47,3 +47,18 @@ rn/
 ├── README.md            this file
 └── exam-requirments.md  the RN course brief
 ```
+
+## Source-code & n8n walkthrough (bilag H–M)
+
+The code and workflow appendix images at full size:
+
+![H1 · App.js — skeleton](bilag/bilag-H1-appjs-skeleton.png)
+![H2 · App.js — auth gate + tab view](bilag/bilag-H2-appjs-auth-n-view.png)
+![I1 · LiveScreen — consts + functions](bilag/bilag-I1-LiveScreen-const-n-functions.png)
+![I2 · LiveScreen — ScrollView](bilag/bilag-I2-LiveScreen-scrollview.png)
+![J1 · VesselScreen — load + ScrollView](bilag/bilag-J1-VesselScreen-load-n-scrollview.png)
+![J2 · VesselScreen — vessel row](bilag/bilag-J2-VesselScreen-vesselrow.png)
+![K1 · ChatScreen — send](bilag/bilag-K1-ChatScreen-send.png)
+![K2 · ChatScreen — FlatList + TextInput](bilag/bilag-K2-ChatScreen-flatlist-n-textinput.png)
+![L · api.js — backend + webhook URLs](bilag/bilag-L-apijs-URL.png)
+![M · n8n — chat workflow](bilag/bilag-M-n8n-workflow.png)
