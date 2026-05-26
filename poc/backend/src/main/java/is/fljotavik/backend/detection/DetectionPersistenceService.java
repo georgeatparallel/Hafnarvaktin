@@ -29,8 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * debounce window; the resulting row captures start time, peak confidence,
  * and the peak-confidence bounding box.
  *
- * <p>Raw events still flow onwards to the WebSocket bus — this service only
- * subscribes to the bus; it does not filter it.
+ * <p>It subscribes to the in-process inference event bus and persists; it
+ * neither blocks nor filters the stream the bus delivers.
  */
 @Service
 public class DetectionPersistenceService {

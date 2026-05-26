@@ -31,6 +31,8 @@ User (Telegram / Slack)
   Neo4j 5 (graph + vector) · Postgres 17 + pgvector · n8n · Spring Boot poc/backend (+ YOLO11m inference)
 ```
 
+![The 8 MCP tools registered on the server](bilag/bilag-L-mcp-tools.png)
+
 Backend containers run on a Netcup VPS ("Helmut"); n8n runs as a separate instance behind a Cloudflare Tunnel; NanoClaw runs as a `systemd --user` service.
 
 ![Live container stack on Helmut](bilag/bilag-F-helmut-docker-ps.png)
@@ -79,7 +81,7 @@ ai/
 ├── n8n-workflows/   Exported n8n workflows (agent-router, harbour-activity)
 ├── eval/            Smoke-test harness (run.mjs, questions.json)
 ├── nanoclaw/        NanoClaw agent platform (fork)
-└── bilag/           Appendix images for the report (Bilag A–K)
+└── bilag/           Appendix images for the report (Bilag A–L)
 ```
 
 ## Reproduce
@@ -114,4 +116,4 @@ A 24-question smoke test (4 scenario types × 6 phrasings) drives the agent thro
 
 ## Report
 
-The full exam report (≤ 5 pages) is [`AI-Hafnarvaktin.docx`](AI-Hafnarvaktin.docx); all appendices (**Bilag A–K**) live in [`bilag/`](bilag/).
+The full exam report (≤ 5 pages) is [`AI-Hafnarvaktin.docx`](AI-Hafnarvaktin.docx); all appendices (**Bilag A–L**) live in [`bilag/`](bilag/).

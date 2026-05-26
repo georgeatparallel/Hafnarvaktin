@@ -13,7 +13,7 @@ public class OpenApiConfig {
         return new OpenAPI().info(new Info()
                 .title("Hafnarvaktin Backend API")
                 .version("v1")
-                .description("REST + WebSocket surface for the Hafnarvaktin YOLO dashboard. "
+                .description("REST surface for the Hafnarvaktin YOLO dashboard. "
                         + "The React Native app consumes the same contract."));
     }
 }

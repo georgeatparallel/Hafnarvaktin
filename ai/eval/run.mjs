@@ -23,7 +23,7 @@ const SIZE_POLL_MS = 1000;
 const STABLE_MS = 10_000;
 const HARD_TIMEOUT_MS = 180_000;
 const CLEAR_SETTLE_MS = 6000;
-const INTER_QUESTION_DELAY_MS = 2500;
+const INTER_QUESTION_DELAY_MS = 13000;
 
 function csvEscape(s) {
   if (s == null) return '';

@@ -357,15 +357,20 @@ async function processQuery(
         setContinuation(providerName, event.continuation);
       } else if (event.type === 'result') {
         // A result — with or without text — means the turn is done. Mark
-        // the initial batch completed now so the host sweep doesn't see
-        // stale 'processing' claims while the query stays open for
-        // follow-up pushes. The agent may have responded via MCP
-        // (send_message) mid-turn, or the message may not need a response
-        // at all — either way the turn is finished.
+        // the initial batch completed and END the query so the next user
+        // message starts a fresh SDK call. Previously the query was kept
+        // open and follow-ups were pushed in, but that path stalls after
+        // ~3 sequential pushes (Anthropic Agent SDK MessageStream wedges
+        // under sustained streaming input). End-per-turn trades a small
+        // SDK init cost (~1-2s) for elimination of the wedge. The
+        // continuation field carries SDK session resume across queries,
+        // so the agent retains full conversation memory turn-to-turn.
         markCompleted(initialBatchIds);
         if (event.text) {
           dispatchResultText(event.text, routing);
         }
+        done = true;
+        query.end();
       }
     }
   } finally {

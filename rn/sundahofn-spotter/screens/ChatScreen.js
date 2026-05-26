@@ -22,22 +22,21 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
 
-  // 1. show user msg in chat  2. send to agent  3. show reply
   async function send() {
     const text = input.trim();
     if (text === '' || sending) return;
     const next = [...messages, { role: 'user', content: text }];
-    setMessages(next);
+    setMessages(next); // show user msg in chat
     setInput('');
     setSending(true);
     try {
-      const res = await fetch(CHAT_URL, {
+      const res = await fetch(CHAT_URL, { // send to agent
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, user: 'rn-app' }),
       });
       const data = await res.json();
-      setMessages([...next, { role: 'assistant', content: data.reply || '(no reply)' }]);
+      setMessages([...next, { role: 'assistant', content: data.reply || '(no reply)' }]); // show reply
     } catch (e) {
       setMessages([...next, { role: 'assistant', content: 'Offline — could not reach the agent.' }]);
     } finally {

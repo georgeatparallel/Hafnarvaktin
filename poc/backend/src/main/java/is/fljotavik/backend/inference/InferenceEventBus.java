@@ -10,8 +10,8 @@ import java.util.function.Consumer;
 
 /**
  * In-process fan-out for detection events coming off the inference SSE
- * stream. The SSE client publishes; subscribers (WebSocket handler,
- * persistence service) consume. Subscriber exceptions never stop the bus.
+ * stream. The SSE client publishes; the persistence service subscribes.
+ * Subscriber exceptions never stop the bus.
  */
 @Component
 public class InferenceEventBus {

@@ -1,9 +1,8 @@
 # Sundahöfn Spotter
 
-A tiny React Native (Expo) app that consumes the **Hafnarvaktin** harbour-watch
-stack on Helmut. Built as the EK React Native exam project — deliberately at
-the level of the small in-class projects, with each line written so I can
-explain it in the oral.
+A small React Native (Expo) app that consumes the **Hafnarvaktin** harbour-watch
+stack on Helmut. It is the EK React Native exam project and runs on the same
+backend as the ML and AI tracks, so the three exams share one live stack.
 
 ## What it does
 
@@ -11,7 +10,7 @@ Three read-only tabs. **Harbour** and **Fleet** consume the same Spring Boot
 backend that the ML and AI exam projects use; **Chat** calls the AI exam's n8n
 webhook:
 
-* **Live** — both Sundahöfn cameras (N and S) with YOLO detection boxes drawn
+* **Harbour** — both Sundahöfn cameras (N and S) with YOLO detection boxes drawn
   server-side. Refreshes every 1.5 seconds via a cache-buster query param.
 * **Fleet** — vessels currently *In port* and *At sea*, drawn from the
   Samgöngustofa registry mirror (Westfjords-home-ported boats). One fetch
@@ -78,17 +77,18 @@ Hafnarvaktin as the joint exam project.
 ## Setup
 
 1. `npm install`
-2. Make sure the Firebase config in `firebaseConfig.js` is yours (already done).
+2. `firebaseConfig.js` holds the Firebase Auth project config (email/password
+   sign-in only — no Firestore or Storage).
 3. `npx expo start` — open in Expo Go on your iPhone.
 
 The Chat tab talks to the AI exam's n8n webhook (`CHAT_URL` in `lib/api.js`),
 which is already live — no backend key or local agent setup is needed for the
 RN app.
 
-## What I'm showing in the exam
+## Exam walkthrough
 
 * Live demo on my phone:
-  * Sign in → land on **Live** → both cameras updating in near-real-time with
+  * Sign in → land on **Harbour** → both cameras updating in near-real-time with
     YOLO boxes drawn on the harbour scene.
   * Swap to **Fleet** → see Sundahöfn regulars from Samgöngustofa split into
     "In port" and "At sea"; pull-to-refresh re-fetches.
