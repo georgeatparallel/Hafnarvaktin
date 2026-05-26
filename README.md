@@ -1,6 +1,6 @@
 # Hafnarvaktin
 
-Three-course EK exam project: ML (Machine Learning / computer vision) + AI (agent system) + RN (React Native), all built around live monitoring of the remote harbour at Ísafjörður, Westfjords, Iceland.
+Three-course EK exam project: ML (Machine Learning) + AI (Agents & Automations) + RN (React Native), all built around live monitoring of the remote harbour at Ísafjörður, Westfjords, Iceland.
 
 ```
 hafnarvaktin/
