@@ -13,7 +13,7 @@ ml/
 └── exam-requirments.md     the ML course brief
 ```
 
-The YOLO inference container (`poc/service/`) and the Spring Boot backend (`poc/backend/`) that serve this model live in `poc/` — that is the live stack and they stay there. `ml/` holds the training-side artifacts and the report.
+The YOLO inference container (`poc/service/`) and the Spring Boot backend (`poc/backend/`) that serve this model live in `poc/` — that is the live stack and they live there with rest of Hafnarvaktin's 'backend' code. `ml/` holds the training-side artifacts and the report.
 
 ## Final training metrics (yolo11m, single-class boat)
 
