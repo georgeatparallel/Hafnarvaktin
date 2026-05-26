@@ -45,3 +45,7 @@ live_snapshot(camera="S")             → URL to fresh annotated frame from the 
 - `ai/scripts/generate-vessel-embeddings.py` — one-shot job that fills the index
 - `ai/n8n-workflows/` — exported workflow JSONs called by `harbour_activity`
 - `poc/backend/` — Spring Boot REST API called by `live_snapshot`
+
+## MCP tools screenshot (from server.py)
+<img width="2048" height="6076" alt="bilag-L-mcp-tools" src="https://github.com/user-attachments/assets/fd5e60df-32a4-4be1-85e3-278272e7ac0f" />
+
