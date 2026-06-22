@@ -23,7 +23,7 @@ Plus a Firebase email/password login gate.
 | navigation | `@react-navigation/native` + `bottom-tabs` |
 | auth | Firebase Auth (email/password) |
 | live frames | `<Image>` polling the backend snapshot endpoint |
-| fleet list | `SectionList` + `fetch` with pull-to-refresh |
+| fleet list | `ScrollView` + `fetch` with pull-to-refresh |
 | chat | `fetch` POST to the n8n webhook (`CHAT_URL`) |
 | persistence | `@react-native-async-storage/async-storage` |
 
