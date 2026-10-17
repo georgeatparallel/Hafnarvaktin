@@ -36,6 +36,7 @@ an unused server name first: adding an existing name replaces that entry.
     "https://search.parallel.ai/mcp",
     "--transport",
     "http-only",
+    "--enable-proxy",
     "--header",
     "User-Agent:Hafnarvaktin/parallel-search"
   ],
@@ -48,6 +49,8 @@ the entry in that group's `container.json` and stops the active session containe
 Send another message to start a container with the new configuration. The first
 connection downloads the pinned adapter with `pnpm dlx`, so the container needs
 outbound access to the npm registry and `https://search.parallel.ai`.
+The adapter's `--enable-proxy` flag honors the container's proxy environment,
+including NanoClaw's OneCLI routing.
 
 Other MCP entries and the selected model/provider stay in place. No Parallel
 credential is added, and the Task API is not configured.
