@@ -106,6 +106,12 @@ docker run -d --name hafnarvaktin-mcp \
 # 3. Connect NanoClaw to the MCP server and message @hafnarvaktinbot on Telegram.
 ```
 
+## Optional web research
+
+For public harbour notices and vessel background, see [Parallel Search MCP setup](parallel-search.md).
+This opt-in NanoClaw v2 setup adds web search and page fetching without a Parallel API key.
+Use the existing harbour tools for live positions, camera evidence and vessel identification.
+
 ## Evaluation
 
 A 24-question smoke test (4 scenario types × 6 phrasings) drives the agent through the same tool paths a real Telegram user hits. The criterion is correct tool selection on the first turn, verifiable against the underlying source.
